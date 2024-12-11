@@ -1,0 +1,99 @@
+create database quanlynhansu;
+use quanlynhansu;
+
+create table departments
+(
+    proc_department_id     int primary key auto_increment,
+    proc_department_name   varchar(50) not null unique,
+    proc_department_status bit default 1
+);
+
+create table employee
+
+(
+    proc_employee_id   int primary key auto_increment,
+    proc_employee_name varchar(50) not null unique,
+    proc_position      varchar(50) not null,
+    proc_salary        double      not null check ( proc_salary > 0 ),
+    proc_hire_date     date        not null,
+    proc_department_id int         not null,
+    foreign key (proc_department_id) references departments (proc_department_id)
+);
+
+delimiter &&
+create procedure find_all_departments()
+begin
+    select * from departments;
+end &&
+delimiter &&;
+
+delimiter &&
+create procedure create_deparments(proc_departments_in varchar(50), proc_department_status_in bit)
+begin
+    insert into departments(proc_department_name, proc_department_status)
+    values (proc_departments_in, proc_department_status_in);
+end &&
+delimiter &&;
+
+delimiter &&
+create procedure update_departments(proc_department_id_in int, proc_departments_in varchar(50),
+                                    proc_department_status_in bit)
+begin
+    update departments
+    set proc_department_name   = proc_departments_in,
+        proc_department_status = proc_department_status_in
+    where proc_department_id = proc_department_id_in;
+end &&
+delimiter &&;
+
+delimiter &&
+create procedure delete_departments(proc_department_id_in int)
+begin
+    update departments
+    set proc_department_status = 0
+    where proc_department_id = proc_department_id_in;
+end &&
+delimiter &&;
+
+delimiter &&
+create procedure find_department_by_id(proc_department_id_in int)
+begin
+    select * from departments where proc_department_id_in;
+end &&
+delimiter &&;
+
+delimiter &&
+create procedure count_departments()
+begin
+    select d.proc_department_name, d.proc_department_id, count(e.proc_employee_id) as 'cntDepartments'
+    from employee e
+             join departments d on e.proc_department_id = d.proc_department_id
+    group by d.proc_department_id;
+end &&
+delimiter &&;
+
+delimiter &&
+create procedure is_check_exist_department(
+    proc_department_id_in int,
+    proc_department_name_in varchar(50),
+    OUT is_exist bit
+)
+begin
+    declare cnt_department int;
+    if proc_department_id_in != 0 then
+        set cnt_department = (select count(departments.proc_department_name)
+                              from departments
+                              where proc_department_name = proc_department_name_in
+                                and proc_department_id != proc_department_id_in);
+    else
+        set cnt_department = (select count(departments.proc_department_name)
+                              from departments
+                              where proc_department_name like proc_department_name_in);
+    end if;
+    if cnt_department = 0 then
+        set is_exist = 0;
+    else
+        set is_exist = 1;
+    end if;
+end &&
+delimiter &&;
